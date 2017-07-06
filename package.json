@@ -1,0 +1,23 @@
+{
+  "name": "showbugs",
+  "version": "1.0.0",
+  "description": "显示 bugfree 上面的 bug",
+  "main": "index.js",
+  "scripts": {
+    "start": "gulp watch"
+  },
+  "repository": "",
+  "author": "593233820@qq.com",
+  "license": "ISC",
+  "dependencies": {
+    "del": "^3.0.0",
+    "fs-extra": "^3.0.1",
+    "gulp": "^3.9.1",
+    "gulp-concat": "^2.6.1",
+    "gulp-livereload": "^3.8.1",
+    "gulp-uglify": "^3.0.0"
+  },
+  "devDependencies": {
+    "materialize-css": "^0.99.0"
+  }
+}
