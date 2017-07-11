@@ -20,6 +20,11 @@ chrome.runtime.onMessage.addListener(function(msg, sender, callback){
 		case "get-bug-error":
 			callback(bugerror || "");
 			break;
+		case "open-bugfree":
+			getVariables().then(function(data){
+				chrome.tabs.create({url: data.server + "/bugfree/index.php/bug/list/1?query_id=-2"});
+			});
+			break;
 		case "error":
 			console.error("error from popup:");
 			console.error(msg.error);

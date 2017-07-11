@@ -22,6 +22,7 @@ app.controller("SetupController", ["$scope", "storage", "$rootScope", function($
 		$rootScope.$digest();
 	});
 
+
 	$scope.saveSetup = function(){
 		var form = $scope.setupForm;
 		var values = {};
@@ -65,6 +66,11 @@ app.controller("BugController", ["$scope", "$interval", "storage", function($sco
 	getBugList();
 	getBugError();
 
+	$scope.openBugfree = function(){
+		console.log("xxx")
+		chrome.runtime.sendMessage({cmd: "open-bugfree"});
+	}
+	
 	$scope.setBugIndex = function(index){
 		$scope.bugIndex = index;
 	};
