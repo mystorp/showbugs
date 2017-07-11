@@ -57,7 +57,9 @@ function main(){
 				chrome.browserAction.setBadgeText({text: "err"});
 				chrome.browserAction.setBadgeBackgroundColor({color: [255, 0, 0, 255]});
 				buglist = [];
-				bugerror = e.message;
+				bugerror = e.toString();
+				// 报错后继续运行
+				setTimeout(loop, 1000 * 60 * 3);
 			});
 		}
 	});

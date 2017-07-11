@@ -43,7 +43,13 @@
 		</form>
 		<!-- bug ui -->
 		<div class="row" style="width: 450px;margin: 15px;" ng-controller="BugController" ng-if="ready">
-			<div ng-show="bugs.length === 0" class="well well-lg text-success" ng-class="{'text-success': !bugError, 'text-danger': !!bugError}" ng-bind="bugError.length > 0 ? bugError : '没有 bug，你很棒棒哒哟！！！'"></div>
+			<div ng-show="bugs.length === 0" class="well well-lg text-success" ng-class="{'text-success': !bugError, 'text-danger': !!bugError}">
+				<p ng-if="bugError.length > 0">
+					糟糕😰，浏览器插件出错了！出错原因：<br/>
+					{{bugError}}
+				</p>
+				<p ng-if="bugError.length === 0">没有 bug，你很棒棒哒哟！！！</p>
+			</div>
 			<div class="col-xs-3">
 				<ul class="nav nav-tabs tabs-left">
 				  <li ng-repeat="bug in bugs track by bug.ID" ng-class="{active: bug.ID === bugIndex}"><a ng-click="setBugIndex(bug.ID)" ng-bind="bug.ID"></a></li>
