@@ -2,8 +2,8 @@ var bugServerUrl;
 var bugServerType;
 
 var storageKeys = [
-	"bug-server-url",
-	"bug-server-type",
+	"server",
+	"type",
 	"username",
 	"password"
 ];
@@ -59,9 +59,9 @@ function getBugs(){
 	var bugUrl = "/bugfree/index.php/bug/list/1?query_id=-2";
 	return getVariables().then(function(data){
 		return new Promise(function(resolve, reject){
-			bugServer = data["bug-server-url"];
+			bugServer = data.server;
 			ajax({
-				url: data["bug-server-url"] + bugUrl,
+				url: data.server + bugUrl,
 				dataType: 'text',
 				success: resolve,
 				error: reject
@@ -108,7 +108,7 @@ function loginBugfree(){
 			formdata.append(key, data[paramMap[key]]);
 		}
 		formdata.append("LoginForm[language]", "zh_cn");
-		return submitForm(data["bug-server-url"] + loginUrl, formdata);
+		return submitForm(data.server + loginUrl, formdata);
 	});
 }
 
