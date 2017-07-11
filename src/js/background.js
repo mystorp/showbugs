@@ -10,11 +10,15 @@ var storageKeys = [
 
 // 每 3 分钟更新一下 bug 列表
 var buglist;
+var bugerror;
 
 chrome.runtime.onMessage.addListener(function(msg, sender, callback){
 	switch(msg.cmd) {
 		case "get-bug-list":
 			callback(buglist ? buglist : []);
+			break;
+		case "get-bug-error":
+			callback(bugerror || "");
 			break;
 		case "error":
 			console.error("error from popup:");
@@ -35,20 +39,25 @@ function main(){
 		loop();
 		function loop(){
 			getBugs().then(function(bugs){
-				buglist = bugs;
+				bugs = buglist = bugs.filter(function(bug){
+					return bug["处理状态"] !== "Local Fix";
+				});
+				bugerror = null;
 				var text = bugs.length === 0 ? "" : bugs.length + "";
 				chrome.browserAction.setBadgeText({text: text})
 				if(bugs.length === 0) {
-					chrome.browserAction.setBadgeBackgroundColor({color: [255,0,0,255]});
+					// 没有 bug
+					chrome.browserAction.setBadgeBackgroundColor({color: [255, 0, 0, 0]});
 				} else {
-					chrome.browserAction.setBadgeBackgroundColor({color: [255,0,0,0]});
+					// 有 bug，标红
+					chrome.browserAction.setBadgeBackgroundColor({color: [255, 0, 0, 255]});
 				}
 				setTimeout(loop, 1000 * 60 * 3);
 			}).catch(function(e){
-				chrome.browserAction.setBadgeText({text: "e"});
-				chrome.browserAction.setBadgeBackgroundColor({color: [255,255,0,255]});
+				chrome.browserAction.setBadgeText({text: "err"});
+				chrome.browserAction.setBadgeBackgroundColor({color: [255, 0, 0, 255]});
 				buglist = [];
-				console.log(e);
+				bugerror = e.message;
 			});
 		}
 	});

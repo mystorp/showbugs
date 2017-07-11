@@ -14,7 +14,6 @@ app.controller("SetupController", ["$scope", "storage", "$rootScope", function($
 			angular.extend($scope, data);
 		}
 		if(checkData(data)) {
-			console.log("set rootScope.ready = true;")
 			$rootScope.ready = true;
 		}
 		$rootScope.$digest();
@@ -59,19 +58,28 @@ app.controller("SetupController", ["$scope", "storage", "$rootScope", function($
 	}
 }]);
 
-app.controller("BugController", ["$scope", "storage", function($scope, storage){
+app.controller("BugController", ["$scope", "$interval", "storage", function($scope, $interval, storage){
 	$scope.bugs = [];
 	$scope.columns = ["ID", "Bug标题", "修改日期", "严重程度", "优先级", "创建者", "指派者", "解决者", "解决方案", "处理状态"];
+
 	getBugList();
+	getBugError();
 
 	$scope.setBugIndex = function(index){
 		$scope.bugIndex = index;
 	};
+
+	var timer = $interval(function(){
+		getBugList();
+		getBugError();
+	}, 2000);
+
+	$scope.$on("$destroy", function(){
+		$interval.cancel(timer);
+	});
 	function getBugList(){
 		chrome.runtime.sendMessage({cmd: "get-bug-list"}, function(bugs){
-			$scope.bugs = bugs.filter(function(bug){
-				return bug["处理状态"] !== "Local Fix";
-			});
+			$scope.bugs = bugs;
 			if($scope.hasOwnProperty("bugIndex")) {
 				var exsits = false;
 				bugs.forEach(function(bug){
@@ -87,6 +95,12 @@ app.controller("BugController", ["$scope", "storage", function($scope, storage){
 					$scope.bugIndex = bugs[0].ID;
 				}
 			}
+			$scope.$digest();
+		});
+	}
+	function getBugError(){
+		chrome.runtime.sendMessage({cmd: "get-bug-error"}, function(err){
+			$scope.bugError = err;
 			$scope.$digest();
 		});
 	}
@@ -108,7 +122,6 @@ app.factory("storage", function(){
 	function getStorage(keys){
 		return new Promise(function(resolve, reject){
 			chrome.storage.local.get(keys || storageKeys, function(data){
-				console.log("get storage:", data);
 				data ? resolve(data) : reject();
 			});
 		});
@@ -117,7 +130,6 @@ app.factory("storage", function(){
 	function setStorage(data){
 		return new Promise(function(resolve, reject){
 			chrome.storage.local.set(data, function(e){
-				console.log("set storage:", data)
 				e ? reject(e) : resolve();
 			});
 		});
