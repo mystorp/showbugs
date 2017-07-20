@@ -20,11 +20,19 @@ chrome.runtime.onMessage.addListener(function(msg, sender, callback){
 		case "get-bug-error":
 			callback(bugerror || "");
 			break;
+		case "open-bug":
+			getVariables().then(function(data){
+				chrome.tabs.create({url: data.server + "/bugfree/index.php/bug/" + msg.id});
+			});
+			break;
 		case "open-bugfree":
 			getVariables().then(function(data){
 				chrome.tabs.create({url: data.server + "/bugfree/index.php/bug/list/1?query_id=-2"});
 			});
 			break;
+		case "bug-detail":
+			getBugDetail(msg.id, callback);
+			return true;
 		case "error":
 			console.error("error from popup:");
 			console.error(msg.error);
@@ -67,6 +75,20 @@ function main(){
 				setTimeout(loop, 1000 * 60 * 3);
 			});
 		}
+	});
+}
+
+var bugDataCache = {};
+function getBugDetail(id, callback){
+	getVariables().then(function(data){
+		var url = data.server + "/bugfree/index.php/bug/" + id;
+		if(bugDataCache.hasOwnProperty(url)) {
+			return Promise.resolve(bugDataCache[url]);
+		}
+		get(url).then(function(data){
+			bugDataCache[url] = data;
+			callback(data);
+		}).catch(callback);
 	});
 }
 
@@ -144,6 +166,16 @@ function submitForm(url, formdata){
 		});
 		xhr.addEventListener("error", reject);
 		xhr.addEventListener("timeout", reject);
+	});
+}
+
+function get(url) {
+	return new Promise(function(resolve, reject){
+		ajax({
+			url: url,
+			success: resolve,
+			error: reject
+		});
 	});
 }
 

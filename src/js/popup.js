@@ -9,17 +9,15 @@ var app = angular.module("BugApp", []);
 app.controller("SetupController", ["$scope", "storage", "$rootScope", function($scope, storage, $rootScope){
 	$scope.server = "192.168.0.4:8011";
 
+	// 异步操作，完成后手动 .$digest()
 	storage.get().then(function(data){
 		if(data) {
 			angular.extend($scope, data);
 		}
-		if(checkData(data)) {
-			$rootScope.ready = true;
-		}
-		$rootScope.$digest();
+		$scope.$digest();
 	}, function(e){
 		$scope.error = e.message;
-		$rootScope.$digest();
+		$scope.$digest();
 	});
 
 
@@ -37,48 +35,69 @@ app.controller("SetupController", ["$scope", "storage", "$rootScope", function($
 		});
 		values.server = "http://" + values.server;
 
+		// 异步操作，完成后手动 .$digest()
 		storage.set(values).then(function(){
-			$rootScope.ready = true;
+			$rootScope.$apply('page = "buglist"');
 		}, function(e){
-			$scope.error = e.message;
+			$scope.$apply('error = e.message');
 		});
 	};
 
 	$scope.$on("error", function(e_, e){
 		$scope.error = e.message
 	});
-
-	function checkData(data){
-		var valid = true;
-		angular.forEach(storageKeys, function(key){
-			if(!data.hasOwnProperty(key)) {
-				valid = false;
-			}
-		});
-		return valid;
-	}
 }]);
 
 app.controller("BugController", ["$scope", "$interval", "storage", function($scope, $interval, storage){
 	$scope.bugs = [];
-	$scope.columns = ["ID", "Bug标题", "修改日期", "严重程度", "优先级", "创建者", "指派者", "解决者", "解决方案", "处理状态"];
+	$scope.columns = ["ID", "Bug标题", "修改日期", "模块路径", "严重程度", "优先级", "创建者", "指派者", "解决者", "解决方案", "处理状态", "附件", "复现步骤"];
 
 	getBugList();
 	getBugError();
 
+	$scope.openBug = function(id){
+		chrome.runtime.sendMessage({cmd: 'open-bug', id: id});
+	};
+
 	$scope.openBugfree = function(){
-		console.log("xxx")
 		chrome.runtime.sendMessage({cmd: "open-bugfree"});
 	}
 	
 	$scope.setBugIndex = function(index){
+		var bug;
 		$scope.bugIndex = index;
+		$scope.bugs.forEach(function(b){
+			if(b.ID === index) {
+				bug = b;
+			}
+		});
+		chrome.runtime.sendMessage({cmd: "bug-detail", id: index}, function(data){
+			if(!data) { return; }
+			var parser = new DOMParser();
+			var doc = parser.parseFromString(data, "text/html");
+			angular.extend(bug, {
+				"Bug标题": doc.querySelector("#BugInfoView_title").value,
+				"模块路径": doc.querySelector("#BugInfoView_module_name").value,
+				"复现步骤": doc.querySelector("#fieldset_step .row").innerText
+			})
+			var imgs = doc.querySelectorAll("#uploaded_file a");
+			imgs = [].map.call(imgs, function(a){
+				return {url: a.getAttribute("href"), text: a.innerText};
+			});
+			storage.get().then(function(data){
+				imgs.forEach(function(o){
+					o.url = data.server + o.url;
+				});
+				bug["附件"] = imgs;
+				$scope.$digest();
+			});
+		});
 	};
 
-	var timer = $interval(function(){
-		getBugList();
-		getBugError();
-	}, 2000);
+	// var timer = $interval(function(){
+	// 	getBugList();
+	// 	getBugError();
+	// }, 2000);
 
 	$scope.$on("$destroy", function(){
 		$interval.cancel(timer);
@@ -89,16 +108,16 @@ app.controller("BugController", ["$scope", "$interval", "storage", function($sco
 			if($scope.hasOwnProperty("bugIndex")) {
 				var exsits = false;
 				bugs.forEach(function(bug){
-					if(bug.ID === bugIndex) {
+					if(bug.ID === $scope.bugIndex) {
 						exsits = true;
 					}
 				});
 				if(!exsits && bugs.length > 0) {
-					$scope.bugIndex = bugs[0].ID;
+					$scope.setBugIndex(bugs[0].ID);
 				}
 			} else {
 				if(bugs.length > 0) {
-					$scope.bugIndex = bugs[0].ID;
+					$scope.setBugIndex(bugs[0].ID);
 				}
 			}
 			$scope.$digest();
@@ -112,7 +131,18 @@ app.controller("BugController", ["$scope", "$interval", "storage", function($sco
 	}
 }]);
 
-app.run(["$rootScope", function($rootScope){
+app.run(["$rootScope", "storage", "isSetuped", function($rootScope, storage, isSetuped){
+	// 根据是否有存储的数据来判断显示哪个界面
+	storage.get().then(function(data){
+		if(isSetuped(data)) {
+			$rootScope.$apply("page = 'buglist'");
+		} else {
+			$rootScope.$apply("page = 'setup'");
+		}
+	}, function(e){
+		$scope.error = e.message;
+		$rootScope.$digest();
+	});
 	// 汇报页面报错信息
 	window.addEventListener("error", function(e){
 		$rootScope.$broadcast("error", e);
@@ -120,14 +150,19 @@ app.run(["$rootScope", function($rootScope){
 }]);
 
 app.factory("storage", function(){
+	var cache;
 	return {
 		get: getStorage,
 		set: setStorage
 	};
 
 	function getStorage(keys){
+		if(cache) {
+			return Promise.resolve(cache);
+		}
 		return new Promise(function(resolve, reject){
 			chrome.storage.local.get(keys || storageKeys, function(data){
+				cache = data;
 				data ? resolve(data) : reject();
 			});
 		});
@@ -135,9 +170,22 @@ app.factory("storage", function(){
 
 	function setStorage(data){
 		return new Promise(function(resolve, reject){
+			cache = null;
 			chrome.storage.local.set(data, function(e){
 				e ? reject(e) : resolve();
 			});
 		});
 	}
+});
+
+app.factory("isSetuped", function(){
+	return function(data){
+		var valid = true;
+		angular.forEach(storageKeys, function(key){
+			if(!data.hasOwnProperty(key)) {
+				valid = false;
+			}
+		});
+		return valid;
+	};
 });

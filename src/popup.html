@@ -9,7 +9,7 @@
 	</head>
 	<body ng-app="BugApp">
 		<!-- setup -->
-		<form style="margin: 15px;width: 320px;" ng-controller="SetupController" name="setupForm" ng-if="!ready" novalidate>
+		<form style="margin: 15px;width: 320px;" ng-controller="SetupController" name="setupForm" ng-if="page === 'setup'" novalidate>
 			<div class="form-group">
 				<label>服务器地址</label>
 				<div class="input-group">
@@ -42,29 +42,42 @@
 			<p ng-show="!!error" class="text-danger" ng-bind="error"></p>
 		</form>
 		<!-- bug ui -->
-		<div class="row" style="width: 450px;margin: 15px;" ng-controller="BugController" ng-if="ready">
+		<div class="row" style="width:800px;margin: 15px;" ng-controller="BugController" ng-if="page === 'buglist'">
 			<div ng-show="bugs.length === 0" class="well well-lg text-success" ng-class="{'text-success': !bugError, 'text-danger': !!bugError}">
 				<p ng-if="bugError.length > 0">
 					糟糕😰，浏览器插件出错了！出错原因：<br/>
 					{{bugError}}
 				</p>
 				<p ng-if="bugError.length === 0">没有 bug，你很棒棒哒哟！！！</p>
-				<p><a ng-click="openBugfree()">在新标签页打开 bugfree</a></p>
 			</div>
-			<div class="col-xs-3">
+			<p ng-show="bugs.length === 0"><a class="apointer" ng-click="openBugfree()">在新标签页打开 bugfree</a></p>
+			<div class="col-xs-2">
 				<ul class="nav nav-tabs tabs-left">
-				  <li ng-repeat="bug in bugs track by bug.ID" ng-class="{active: bug.ID === bugIndex}"><a ng-click="setBugIndex(bug.ID)" ng-bind="bug.ID"></a></li>
+					<li ng-repeat="bug in bugs track by bug.ID" ng-class="{active: bug.ID === bugIndex}">
+						<a class="apointer" ng-click="setBugIndex(bug.ID)" ng-bind="bug.ID"></a>
+					</li>
 				</ul>
 			</div>
 
-			<div class="col-xs-9">
+			<div class="col-xs-10">
 				<!-- Tab panes -->
 				<div class="tab-content">
 				  <div class="tab-pane" ng-repeat="bug in bugs track by bug.ID" ng-class="{active: bug.ID === bugIndex}">
 					<table>
-						<tr ng-repeat="col in columns track by $index" ng-show="!!bug[col]">
+						<tr ng-repeat="col in columns track by $index" ng-if="!!bug[col]">
+							
 							<td class="key" ng-bind="col"></td>
-							<td class="value" ng-bind="bug[col]"></td>
+							<td class="value" ng-bind="bug[col]" ng-if="col !== 'ID' && col !== '附件' && col !== '复现步骤'"></td>
+							<td class="value" ng-if="col === 'ID'">
+								<a class="apointer" ng-click="openBug(bug.ID)" ng-bind="bug[col]"></a>
+							</td>
+							<td class="value" ng-if="col === '附件'">
+								<div ng-repeat="img in bug[col]" style="margin: 10px 0;">
+									<span ng-bind="img.text"></span><br/>
+									<img ng-src="{{img.url}}"/>
+								</div>
+							</td>
+							<td class="value" ng-if="col === '复现步骤'"><pre ng-bind="bug[col]"></pre></td>
 						</tr>
 					</table>
 				  </div>
