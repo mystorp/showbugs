@@ -65,19 +65,32 @@
 				  <div class="tab-pane" ng-repeat="bug in bugs track by bug.ID" ng-class="{active: bug.ID === bugIndex}">
 					<table>
 						<tr ng-repeat="col in columns track by $index" ng-if="!!bug[col]">
-							
-							<td class="key" ng-bind="col"></td>
-							<td class="value" ng-bind="bug[col]" ng-if="col !== 'ID' && col !== '附件' && col !== '复现步骤'"></td>
-							<td class="value" ng-if="col === 'ID'">
-								<a class="apointer" ng-click="openBug(bug.ID)" ng-bind="bug[col]"></a>
-							</td>
-							<td class="value" ng-if="col === '附件'">
-								<div ng-repeat="img in bug[col]" style="margin: 10px 0;">
-									<span ng-bind="img.text"></span><br/>
-									<img ng-src="{{img.url}}"/>
+							<td ng-if="!isSpectialColumn(col)" class="key" ng-bind="col"></td>
+							<td ng-if="!isSpectialColumn(col)" class="value" ng-bind="bug[col]"></td>
+							<td colspan="2" ng-if="isSpectialColumn(col)">
+								<!-- ID -->
+								<div ng-if="col === 'ID'">
+									<a class="apointer" ng-click="openBug(bug.ID)">在 bugfree 中打开此 bug</a><br/>
+									<a class="apointer" ng-click="openBugfree()">在新标签页打开 bugfree</a>
+								</div>
+								
+								<!-- 附件 -->
+								<div ng-if="col === '附件'">
+									<h3>附件</h3>
+									<div ng-repeat="img in bug[col]" style="margin: 10px 0;">
+										<a class="apointer" ng-click="img.visible = !img.visible">
+											<span ng-bind="img.visible ? '隐藏' : '显示'"></span>截图：
+											<span ng-bind="img.text"></span>
+										</a><br/>
+										<img ng-src="{{img.url}}" ng-if="img.visible"/>
+									</div>
+								</div>
+								<!-- 复现步骤 -->
+								<div ng-if="col === '复现步骤'">
+									<h3>复现步骤</h3>
+									<pre ng-bind="bug[col]"></pre>
 								</div>
 							</td>
-							<td class="value" ng-if="col === '复现步骤'"><pre ng-bind="bug[col]"></pre></td>
 						</tr>
 					</table>
 				  </div>
