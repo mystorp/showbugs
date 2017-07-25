@@ -31,3 +31,5 @@ node_modules
 .idea
 *.sublime-project
 *.sublime-workspace
+dist.crx
+dist.pem

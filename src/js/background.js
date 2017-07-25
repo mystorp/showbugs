@@ -33,6 +33,9 @@ chrome.runtime.onMessage.addListener(function(msg, sender, callback){
 		case "bug-detail":
 			getBugDetail(msg.id, callback);
 			return true;
+		case "reload":
+			chrome.runtime.reload();
+			break;
 		case "error":
 			console.error("error from popup:");
 			console.error(msg.error);
@@ -117,7 +120,7 @@ function getBugs(){
 			cells = rows[i].cells;
 			rowObj = {};
 			headCells.forEach(function(cell, i){
-				rowObj[cell.innerText] = cells[i].innerText;
+				rowObj[cell.innerText] = cells[i].getAttribute("title") || cells[i].innerText;
 			});
 			bugs.push(rowObj);
 		}

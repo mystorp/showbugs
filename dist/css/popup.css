@@ -1,0 +1,4 @@
+td.key {font-weight: bold;white-space: nowrap;}
+td.value {padding-left: 10px;}
+td.value img {max-width: 100%;}
+.apointer {cursor: pointer;}

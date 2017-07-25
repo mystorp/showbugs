@@ -14,12 +14,14 @@
     "fs-extra": "^3.0.1",
     "gulp": "^3.9.1",
     "gulp-concat": "^2.6.1",
+    "gulp-html-minifier2": "^1.1.8",
     "gulp-livereload": "^3.8.1",
-    "gulp-uglify": "^3.0.0"
+    "gulp-uglify": "^3.0.0",
+    "through2": "^2.0.3"
   },
   "devDependencies": {
     "angular": "^1.6.5",
     "bootstrap": "^3.3.7",
-    "bootstrap-vertical-tabs": "^1.2.2",
+    "bootstrap-vertical-tabs": "^1.2.2"
   }
 }

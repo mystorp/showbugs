@@ -1,15 +1,30 @@
 var gulp = require('gulp'),
 	concat = require('gulp-concat'),
 	minify = require("gulp-uglify"),
+	htmlmin = require("gulp-html-minifier2"),
 	livereload = require('gulp-livereload'),
+	through2 = require("through2"),
 	fs = require('fs-extra'),
 	path = require("path"),
 	del = require("del");
 
-gulp.task('copy-static', function() {
-	gulp.src("src/logo128.png").pipe(gulp.dest("dist"));
-	gulp.src("src/imgs/*").pipe(gulp.dest("dist/imgs"));
+gulp.task("build-popup", function(){
+	gulp.src("src/popup.html").pipe(htmlmin({
+		removeComments: true,
+		removeCommentsFromCDATA: true,
+		collapseWhitespace: true
+	})).pipe(through2.obj(function(file, enc, callback){
+		var text = file.contents.toString();
+		text = text.replace("js/angular.js", "js/angular.min.js");
+		file.contents = new Buffer(text);
+		callback(null, file);
+	})).pipe(gulp.dest("dist"));
+});
+
+gulp.task('copy-static', ["build-popup"], function() {
+	gulp.src("src/img/*").pipe(gulp.dest("dist/img"));
 	gulp.src("src/css/*").pipe(gulp.dest("dist/css"));
+	gulp.src(["src/js/angular.min.js", "src/js/popup.js"]).pipe(gulp.dest("dist/js"));
 });
 
 gulp.task("build", ["copy-static"], function(){
@@ -18,7 +33,7 @@ gulp.task("build", ["copy-static"], function(){
 	var distBgJs = "js/bg.js";
 	arr.push(buildBackground(manifest.background.scripts, distBgJs));
 	manifest.background.scripts = [distBgJs];
-	manifest.content_scripts.forEach(function(conf, i){
+	manifest.content_scripts && manifest.content_scripts.forEach(function(conf, i){
 		var bundle = "js/cs" + i + ".js";
 		arr.push(buildContentScript(conf.js, bundle));
 		conf.js = [bundle];
