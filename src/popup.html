@@ -42,15 +42,22 @@
 			<p ng-show="!!error" class="text-danger" ng-bind="error"></p>
 		</form>
 		<!-- bug ui -->
-		<div class="row" style="width:800px;margin: 15px;" ng-controller="BugController" ng-if="page === 'buglist'">
-			<div ng-show="bugs.length === 0" class="well well-lg text-success" ng-class="{'text-success': !bugError, 'text-danger': !!bugError}">
-				<p ng-if="bugError.length > 0">
-					糟糕😰，浏览器插件出错了！出错原因：<br/>
-					{{bugError}}
-				</p>
-				<p ng-if="bugError.length === 0">没有 bug，你很棒棒哒哟！！！</p>
+		<div class="row" style="width:800px;" ng-controller="BugController" ng-if="page === 'buglist'">
+			<div class="col-xs-12">
+				<div ng-show="bugs.length === 0" class="well well-lg text-success" ng-class="{'text-success': !bugError, 'text-danger': !!bugError}">
+					<p ng-if="bugError.length > 0">
+						糟糕😰，浏览器插件出错了！出错原因：<br/>
+						{{bugError}}
+					</p>
+					<p ng-if="bugError.length === 0">没有 bug，你很棒棒哒哟！！！</p>
+				</div>
 			</div>
-			<p ng-show="bugs.length === 0"><a class="apointer" ng-click="openBugfree()">在新标签页打开 bugfree</a></p>
+			<div class="col-xs-12">
+				<p>
+					<a class="apointer" ng-click="openBugfree()">在新标签页打开 bugfree</a>
+					<a class="pull-right apointer" ng-click="resetStorage()">重置用户数据</a>
+				</p>
+			</div>
 			<div class="col-xs-2">
 				<ul class="nav nav-tabs tabs-left">
 					<li ng-repeat="bug in bugs track by bug.ID" ng-class="{active: bug.ID === bugIndex}">
@@ -63,7 +70,7 @@
 				<!-- Tab panes -->
 				<div class="tab-content">
 				  <div class="tab-pane" ng-repeat="bug in bugs track by bug.ID" ng-class="{active: bug.ID === bugIndex}">
-					<table>
+					<table class="bug-table">
 						<tr ng-repeat="col in columns track by $index" ng-if="!!bug[col]">
 							<td ng-if="!isSpectialColumn(col)" class="key" ng-bind="col"></td>
 							<td ng-if="!isSpectialColumn(col)" class="value" ng-bind="bug[col]"></td>
@@ -71,7 +78,6 @@
 								<!-- ID -->
 								<div ng-if="col === 'ID'">
 									<a class="apointer" ng-click="openBug(bug.ID)">在 bugfree 中打开此 bug</a><br/>
-									<a class="apointer" ng-click="openBugfree()">在新标签页打开 bugfree</a>
 								</div>
 								
 								<!-- 附件 -->

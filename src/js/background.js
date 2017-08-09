@@ -45,7 +45,7 @@ chrome.runtime.onMessage.addListener(function(msg, sender, callback){
 
 chrome.storage.onChanged.addListener(function(changes, area){
 	if(area !== "local") { return; }
-	// setVariables();
+	console.log("storage changed:", changes);
 });
 
 main();
@@ -73,7 +73,11 @@ function main(){
 				chrome.browserAction.setBadgeText({text: "err"});
 				chrome.browserAction.setBadgeBackgroundColor({color: [255, 0, 0, 255]});
 				buglist = [];
-				bugerror = e.toString();
+				if(e instanceof XMLHttpRequest) {
+					bugerror = "请求失败";
+				} else {
+					bugerror = e.toString();
+				}
 				// 报错后继续运行
 				setTimeout(loop, 1000 * 60 * 3);
 			});
@@ -120,7 +124,12 @@ function getBugs(){
 			cells = rows[i].cells;
 			rowObj = {};
 			headCells.forEach(function(cell, i){
-				rowObj[cell.innerText] = cells[i].getAttribute("title") || cells[i].innerText;
+				if(!cells[i]) { return; }
+				if(cells[i].className === "title") {
+					rowObj[cell.innerText] = cells[i].querySelector("a").getAttribute("title");
+				} else {
+					rowObj[cell.innerText] = cells[i].innerText;
+				}
 			});
 			bugs.push(rowObj);
 		}
@@ -160,11 +169,12 @@ function submitForm(url, formdata){
 		xhr.open("POST", url);
 		xhr.send(formdata);
 		xhr.addEventListener("load", function(e){
-			var url = e.target.responseURL;
-			if(url.indexOf("bugfree/index.php/bug/list/1") > -1) {
+			var status = e.target.status;
+			var statusText = e.target.statusText;
+			if(status === 200) {
 				resolve();
 			} else {
-				reject(new Error("unknow error"));
+				reject(new Error(statusText));
 			}
 		});
 		xhr.addEventListener("error", reject);

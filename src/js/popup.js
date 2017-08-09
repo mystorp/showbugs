@@ -7,12 +7,15 @@ var storageKeys = [
 var app = angular.module("BugApp", []);
 
 app.controller("SetupController", ["$scope", "storage", "$rootScope", function($scope, storage, $rootScope){
-	$scope.server = "192.168.0.4:8011";
+	var defaults = {
+		server: "172.16.203.11:8011",
+		type: "bugfree"
+	};
 
 	// 异步操作，完成后手动 .$digest()
 	storage.get().then(function(data){
 		if(data) {
-			angular.extend($scope, data);
+			angular.extend($scope, defaults, data);
 		}
 		$scope.$digest();
 	}, function(e){
@@ -100,6 +103,12 @@ app.controller("BugController", ["$scope", "$interval", "storage", function($sco
 		return ["ID", "附件", "复现步骤"].indexOf(name) > -1;
 	};
 
+	$scope.resetStorage = function(){
+		storage.clear().then(function(){
+			chrome.runtime.sendMessage({cmd: 'reload'});
+		});
+	};
+
 	// var timer = $interval(function(){
 	// 	getBugList();
 	// 	getBugError();
@@ -159,7 +168,8 @@ app.factory("storage", function(){
 	var cache;
 	return {
 		get: getStorage,
-		set: setStorage
+		set: setStorage,
+		clear: clearStorage
 	};
 
 	function getStorage(keys){
@@ -179,6 +189,14 @@ app.factory("storage", function(){
 			cache = null;
 			chrome.storage.local.set(data, function(e){
 				e ? reject(e) : resolve();
+			});
+		});
+	}
+
+	function clearStorage(){
+		return new Promise(function(resolve, reject){
+			chrome.storage.local.clear(function(err){
+				err ? reject(err) : resolve();
 			});
 		});
 	}
