@@ -1,3 +1,4 @@
+(function(){
 var storageKeys = [
 	"server",
 	"type",
@@ -231,3 +232,4 @@ app.factory("isSetuped", function(){
 		return valid;
 	};
 });
+})();

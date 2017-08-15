@@ -1,3 +1,4 @@
+(function(){
 var bugServerUrl;
 var bugServerType;
 
@@ -209,3 +210,4 @@ function post(url, data) {
 		});
 	});
 }
+})();
