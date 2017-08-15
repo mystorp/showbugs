@@ -24,7 +24,13 @@ gulp.task("build-popup", function(){
 gulp.task('copy-static', ["build-popup"], function() {
 	gulp.src("src/img/*").pipe(gulp.dest("dist/img"));
 	gulp.src("src/css/*").pipe(gulp.dest("dist/css"));
-	gulp.src(["src/js/angular.min.js", "src/js/popup.js"]).pipe(gulp.dest("dist/js"));
+	gulp.src("src/js/angular.min.js").pipe(gulp.dest("dist/js"));
+});
+
+gulp.task("build-popup", function(){
+	gulp.src("src/js/popup.js").pipe(minify({
+		toplevel: true
+	})).pipe(gulp.dest("dist/js"));
 });
 
 gulp.task("build", ["copy-static"], function(){
@@ -64,10 +70,7 @@ function buildScripts(files, tofile){
 	});
 	return new Promise(function(resolve, reject){
 		var stream = gulp.src(files).pipe(concat(obj.base)).pipe(minify({
-			toplevel: true,
-			output: {
-				wrap_iife: true
-			}
+			toplevel: true
 		})).pipe(gulp.dest(obj.dir));
 		stream.on("finish", resolve);
 		stream.on("error", reject);
