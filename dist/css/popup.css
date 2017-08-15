@@ -1,4 +1,8 @@
+body {padding: 15px;}
 td.key {font-weight: bold;white-space: nowrap;}
 td.value {padding-left: 10px;}
-td.value img {max-width: 100%;}
 .apointer {cursor: pointer;}
+.apointer + label {margin-left: 20px;}
+.bug-table {width: 100%; max-width: 100%;}
+.bug-table pre {white-space: pre-wrap;}
+.bug-table img {max-width: 100%;}
