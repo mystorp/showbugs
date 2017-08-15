@@ -55,13 +55,17 @@ function main(){
 		loop();
 		function loop(){
 			getBugs().then(function(bugs){
-				bugs = buglist = bugs.filter(function(bug){
-					return bug["处理状态"] !== "Local Fix";
-				});
+				// bugs = buglist = bugs.filter(function(bug){
+				// 	return bug["处理状态"] !== "Local Fix";
+				// });
+				buglist = bugs;
 				bugerror = null;
-				var text = bugs.length === 0 ? "" : bugs.length + "";
+				var bugLength = bugs.filter(function(bug){
+					return bug["处理状态"] !== "Local Fix";
+				}).length;
+				var text = bugLength === 0 ? "" : bugLength + "";
 				chrome.browserAction.setBadgeText({text: text})
-				if(bugs.length === 0) {
+				if(bugLength === 0) {
 					// 没有 bug
 					chrome.browserAction.setBadgeBackgroundColor({color: [255, 0, 0, 0]});
 				} else {
@@ -131,7 +135,9 @@ function getBugs(){
 					rowObj[cell.innerText] = cells[i].innerText;
 				}
 			});
-			bugs.push(rowObj);
+			if(rowObj.hasOwnProperty("ID")) {
+				bugs.push(rowObj);
+			}
 		}
 		return bugs;
 	});

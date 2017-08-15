@@ -53,6 +53,7 @@ app.controller("SetupController", ["$scope", "storage", "$rootScope", function($
 }]);
 
 app.controller("BugController", ["$scope", "$interval", "storage", function($scope, $interval, storage){
+	$scope.ignoreLocalFix = false;
 	$scope.bugs = [];
 	$scope.columns = ["ID", "Bug标题", "修改日期", "模块路径", "严重程度", "优先级", "创建者", "指派者", "解决者", "解决方案", "处理状态", "附件", "复现步骤"];
 
@@ -101,6 +102,23 @@ app.controller("BugController", ["$scope", "$interval", "storage", function($sco
 
 	$scope.isSpectialColumn = function(name){
 		return ["ID", "附件", "复现步骤"].indexOf(name) > -1;
+	};
+
+	$scope.toggleLocalFix = function(v){
+		var bugs = $scope.originalBugs || $scope.bugs;
+		var filteredBugs = bugs.filter(function(bug){
+			var isfix = bug["处理状态"] === "Local Fix";
+			return isfix !== v;
+		});
+		$scope.originalBugs = bugs;
+		$scope.bugs = filteredBugs;
+		if($scope.originalBugs.length === $scope.bugs.length) {
+			delete $scope.originalBugs;
+		}
+	};
+
+	$scope.isLocalFix = function(bug) {
+		return bug["处理状态"] === "Local Fix";
 	};
 
 	$scope.resetStorage = function(){
