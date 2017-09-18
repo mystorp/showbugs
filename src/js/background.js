@@ -83,10 +83,12 @@ function main(){
 				} else {
 					bugerror = e.toString();
 				}
-				// 报错后继续运行
-				setTimeout(loop, 1000 * 60 * 3);
+				// 报错从头开始运行
+				setTimeout(main, 1000 * 60 * 5);
 			});
 		}
+	}).catch(function(){
+		setTimeout(main, 1000 * 60 * 5);
 	});
 }
 
