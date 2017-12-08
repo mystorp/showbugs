@@ -54,7 +54,8 @@
 				<div ng-show="bugs.length === 0" class="well well-lg text-success" ng-class="{'text-success': !bugError, 'text-danger': !!bugError}">
 					<p ng-if="bugError.length > 0">
 						糟糕😰，浏览器插件出错了！出错原因：<br/>
-						{{bugError}}
+						{{bugError}}<br/>
+						当插件无法连接 bugfree 服务器时，很可能出现此问题，如果此问题一直存在，点击<a class="apointer" ng-click="reloadExtension()">这里</a>
 					</p>
 					<p ng-if="bugError.length === 0">没有 bug，你很棒棒哒哟！！！</p>
 				</div>

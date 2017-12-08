@@ -67,7 +67,11 @@ app.controller("BugController", ["$scope", "$interval", "storage", function($sco
 
 	$scope.openBugfree = function(){
 		chrome.runtime.sendMessage({cmd: "open-bugfree"});
-	}
+	};
+
+	$scope.reloadExtension = function(){
+		chrome.runtime.sendMessage({cmd: "reload"});
+	};
 	
 	$scope.setBugIndex = function(index){
 		var bug;

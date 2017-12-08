@@ -59,7 +59,9 @@ function main(){
 				// bugs = buglist = bugs.filter(function(bug){
 				// 	return bug["处理状态"] !== "Local Fix";
 				// });
-				buglist = bugs;
+				buglist = bugs.filter(function(bug){
+					return bug["解决方案"] === "";
+				});
 				bugerror = null;
 				var bugLength = bugs.filter(function(bug){
 					return bug["处理状态"] !== "Local Fix";
