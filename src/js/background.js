@@ -277,10 +277,9 @@ function updateBugCache(bugs) {
 		}
 	});
 	newBugs.forEach(function(bug){
-		// TODO: 调试阶段结束后恢复判断
-		// if(bug["处理状态"] !== "Local Fix") {
+		if(bug["处理状态"] !== "Local Fix") {
 			showNotification(bug);
-		// }
+		}
 	});
 	buglist = bugs;
 	return bugs;
