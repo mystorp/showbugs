@@ -258,12 +258,22 @@ function updateBugCache(bugs) {
 			newBugs.push(bug);
 		}
 	});
+	var fieldMissing = false;
 	newBugs.forEach(function(bug){
-		if(bug["处理状态"] !== "Local Fix") {
-			showNotification(bug);
+		if(bug["处理状态"]) {
+			if(bug["处理状态"] !== "Local Fix") {
+				showNotification(bug);
+			}
+		} else {
+			fieldMissing = true;
 		}
 	});
-	buglist = bugs;
+	if(fieldMissing) {
+		bugerror = "无法获取 bug 的处理状态，请在 bugfree 中添加此列";
+		buglist = [];
+	} else {
+		buglist = bugs;
+	}
 	return bugs;
 }
 
