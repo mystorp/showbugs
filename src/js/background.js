@@ -59,6 +59,8 @@ chrome.storage.onChanged.addListener(function(changes, area){
 
 // 监听通知点击
 chrome.notifications.onClicked.addListener(function(id){
+	// clear first
+	chrome.notifications.clear(id);
 	var bugId = id.split("-").pop();
 	var bug = buglist.filter(function(bug){
 		return bug.ID === bugId;
@@ -210,26 +212,6 @@ function loginBugfree(){
 				resolve(data);
 			}
 		})(formdata);
-	});
-}
-
-
-function submitForm(url, formdata){
-	return new Promise(function(resolve, reject){
-		var xhr = new XMLHttpRequest();
-		xhr.open("POST", url);
-		xhr.send(formdata);
-		xhr.addEventListener("load", function(e){
-			var status = e.target.status;
-			var statusText = e.target.statusText;
-			if(status === 200) {
-				resolve();
-			} else {
-				reject(new Error(statusText));
-			}
-		});
-		xhr.addEventListener("error", reject);
-		xhr.addEventListener("timeout", reject);
 	});
 }
 
