@@ -1,4 +1,7 @@
 body {padding: 15px;}
+.setup-ui {margin: 15px;width: 320px;}
+.setup-ui, .bug-ui {transition: margin-top .2s linear;margin-top: 10px;}
+.ready .setup-ui, .ready .bug-ui {margin-top: 0;}
 td.key {font-weight: bold;white-space: nowrap;}
 td.value {padding-left: 10px;}
 .apointer {cursor: pointer;}
