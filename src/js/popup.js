@@ -83,25 +83,8 @@ app.controller("BugController", ["$scope", "$interval", "storage", function($sco
 		});
 		if(bug.hasOwnProperty("模块路径")) { return; }
 		chrome.runtime.sendMessage({cmd: "bug-detail", id: index}, function(data){
-			if(!data) { return; }
-			var parser = new DOMParser();
-			var doc = parser.parseFromString(data, "text/html");
-			angular.extend(bug, {
-				"Bug标题": doc.querySelector("#BugInfoView_title").value,
-				"模块路径": doc.querySelector("#BugInfoView_module_name").value,
-				"复现步骤": doc.querySelector("#fieldset_step .row").innerText.trim().replace(/\n{2,}/g, "\n")
-			});
-			var imgs = doc.querySelectorAll("#uploaded_file a");
-			imgs = [].map.call(imgs, function(a){
-				return {url: a.getAttribute("href"), text: a.innerText, visible: false};
-			});
-			storage.get().then(function(data){
-				imgs.forEach(function(o){
-					o.url = data.server + o.url;
-				});
-				bug["附件"] = imgs;
-				$scope.$digest();
-			});
+			if(!data || data instanceof Error) { return; }
+			angular.extend(bug, data);
 		});
 	};
 
