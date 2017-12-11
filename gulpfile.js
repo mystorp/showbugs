@@ -1,6 +1,5 @@
 /* global require, Promise, Buffer */
 var gulp = require("gulp"),
-	concat = require("gulp-concat"),
 	minify = require("gulp-uglify"),
 	htmlmin = require("gulp-html-minifier2"),
 	livereload = require("gulp-livereload"),
@@ -37,9 +36,10 @@ gulp.task("build-popup", function(){
 
 gulp.task("build", ["copy-static"], function(){
 	var manifest = fs.readJsonSync("src/manifest.json");
+	// remove livereload.js
+	manifest.background.scripts.pop();
 	fs.writeJsonSync("dist/manifest.json", manifest);
 	return gulp.src("src/js/background.js")
-		.pipe(concat("bg.js"))
 		.pipe(iife())
 		.pipe(minify())
 		.pipe(gulp.dest("dist/js"));
@@ -54,6 +54,7 @@ gulp.task("watch", function() {
 	gulp.watch([
 		"src/js/*.js",
 		"src/css/*.css",
+		"src/*.html",
 		"src/manifest.json"
 	], ["reload"]);
 });

@@ -2,7 +2,9 @@ var bugServerOrigin;
 var bugServerType; // eslint-disable-line no-unused-vars
 var bugServerUsername;
 var bugServerPassword;
+
 var pluginReady = false;
+var pluginReadyCallbacks = [];
 
 var restartInterval = 5 * 60 * 1000;    // 发生错误导致重启整个流程间隔
 var refreshBugInterval = 3 * 60 * 1000; // bug 列表刷新间隔
@@ -45,6 +47,14 @@ chrome.runtime.onMessage.addListener(function(msg, sender, callback){
 		case "bug-detail":
 			getBugDetail(msg.id, callback);
 			return true;
+		case "test-ready":
+			if(pluginReady) {
+				callback(true);
+			} else {
+				pluginReadyCallbacks.push(callback);
+				return true;
+			}
+			break;
 		case "reload":
 			chrome.runtime.reload();
 			break;
@@ -100,7 +110,7 @@ function main(){
 		var errorCount = 0; // 错误
 		pluginReady = true;
 		bugerror = "";
-		tryBroadcastReady();
+		triggerReadyCallbacks();
 		loop();
 		function loop(){
 			getBugs().then(function(bugs){
@@ -283,35 +293,46 @@ function updateBugCache(bugs) {
 	newBugs.forEach(function(bug){
 		if(bug["处理状态"]) {
 			if(bug["处理状态"] !== "Local Fix") {
-				showNotification(bug);
+				showBugNotification(bug);
 			}
 		} else {
 			fieldMissing = true;
 		}
 	});
 	if(fieldMissing) {
-		bugerror = "无法获取 bug 的处理状态，请在 bugfree 中添加此列";
-		buglist = [];
-	} else {
-		buglist = bugs;
+		showNotification(
+			"showbugs-ignore",
+			"无法获取 bug 的\"处理状态\"列信息",
+			"请在 bugfree 中添加此列，没有此列，插件不能及时向你通知新 bug"
+		);
 	}
+	buglist = bugs;
 	return bugs;
 }
 
-function tryBroadcastReady(){
-	chrome.tabs.query({windowType: "popup"}, function(arr){
-		if(arr && arr.length > 0) {
-			chrome.tabs.sendMessage(arr[0].id, {cmd: "ready"});
+function triggerReadyCallbacks(){
+	var arr = pluginReadyCallbacks;
+	var fn;
+	while(arr.length > 0) {
+		try {
+			fn = arr.shift();
+			fn();
+		} catch(e) {
+			console.log("ready callback error:", e);
 		}
-	});
+	}
 }
 
-function showNotification(bug){
-	chrome.notifications.create("showbugs-" + bug.ID, {
+function showBugNotification(bug){
+	showNotification("showbugs-" + bug.ID, "亲，你有新 bug 啦！", bug["Bug标题"]);
+}
+
+function showNotification(id, title, message){
+	chrome.notifications.create(id, {
 		type: "basic",
 		iconUrl: "../img/logo.png",
-		title: "亲，你有新 bug 啦！",
-		message: bug["Bug标题"]
+		title: title,
+		message: message
 	});
 }
 

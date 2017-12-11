@@ -93,7 +93,14 @@ function SetupController($scope, storage, $rootScope){
 		});
 		values.server = "http://" + values.server;
 		
-		storage.set(values).catch(function(e){
+		storage.set(values).then(function(){
+			chrome.runtime.sendMessage({cmd: "test-ready"}, function(){
+				$scope.loading = false;
+				$rootScope.$apply(function(scope){
+					scope.page = "buglist";
+				});
+			});
+		}).catch(function(e){
 			$scope.$apply(function(scope){
 				scope.error = e.message;
 			});
@@ -109,15 +116,6 @@ function SetupController($scope, storage, $rootScope){
 
 	$scope.$on("error", function(e_, e){
 		$scope.error = e.message
-	});
-
-	chrome.runtime.onMessage.addListener(function(msg){
-		if(msg.cmd === "ready") {
-			$scope.loading = false;
-			$rootScope.$apply(function(scope){
-				scope.page = "buglist";
-			});
-		}
 	});
 }
 
