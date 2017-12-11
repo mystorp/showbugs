@@ -34,6 +34,7 @@ gulp.task("build-popup.js", function(){
 		.pipe(gulp.dest("dist/js"));
 });
 
+// eslint-disable-next-line max-len
 gulp.task("build", ["copy-static", "build-popup.js", "build-popup.html"], function(){
 	var manifest = fs.readJsonSync("src/manifest.json");
 	// remove livereload.js
