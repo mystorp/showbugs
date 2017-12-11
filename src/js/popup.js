@@ -68,15 +68,15 @@ function SetupController($scope, storage, $rootScope){
 		type: "bugfree"
 	};
 
-	// 异步操作，完成后手动 .$digest()
+	// 异步操作，完成后刷新 scope
 	storage.get().then(function(data){
 		if(data) {
 			angular.extend($scope, defaults, data);
 		}
-		$scope.$digest();
+		$scope.$apply();
 	}, function(e){
 		$scope.error = e.message;
-		$scope.$digest();
+		$scope.$apply();
 	});
 
 	$scope.saveSetup = function(){
@@ -121,7 +121,7 @@ function SetupController($scope, storage, $rootScope){
 
 SetupController.$inject = ["$scope", "storage", "$rootScope"];
 
-function BugController($scope, $interval, storage){
+function BugController($scope, $timeout, storage){
 	$scope.ignoreLocalFix = false;
 	$scope.bugs = [];
 	$scope.columns = [
@@ -129,8 +129,7 @@ function BugController($scope, $interval, storage){
 		"创建者", "指派者", "解决者", "解决方案", "处理状态", "附件", "复现步骤"
 	];
 
-	getBugList();
-	getBugError();
+	
 
 	$scope.openBug = function(id){
 		chrome.runtime.sendMessage({cmd: "open-bug", id: id});
@@ -164,6 +163,7 @@ function BugController($scope, $interval, storage){
 				return; 
 			}
 			angular.extend(bug, data);
+			$scope.$apply();
 		});
 	};
 
@@ -194,36 +194,52 @@ function BugController($scope, $interval, storage){
 		});
 	};
 
+	loop();
+
+	function loop() {
+		getBugList();
+		getBugError();
+		$timeout(loop, 2000);
+	}
+
 	function getBugList(){
 		chrome.runtime.sendMessage({cmd: "get-bug-list"}, function(bugs){
-			$scope.bugs = bugs;
-			if($scope.hasOwnProperty("bugIndex")) {
-				var exsits = false;
-				bugs.forEach(function(bug){
-					if(bug.ID === $scope.bugIndex) {
-						exsits = true;
-					}
-				});
-				if(!exsits && bugs.length > 0) {
-					$scope.setBugIndex(bugs[0].ID);
+			var bugMap = {};
+			var newBugs = [];
+			angular.forEach($scope.bugs, function(bug){
+				// 标记 bug 为不存在，合并新 bug 数据后删除此标记
+				bug.exsits = false;
+				bugMap[bug.ID] = bug;
+			});
+			angular.forEach(bugs, function(bug){
+				if(bugMap.hasOwnProperty(bug.ID)) {
+					bug.exsits = true;
+					angular.extend(bugMap[bug.ID], bug);
+				} else {
+					newBugs.push(bug);
 				}
-			} else {
-				if(bugs.length > 0) {
-					$scope.setBugIndex(bugs[0].ID);
-				}
+			});
+			$scope.bugs = $scope.bugs.filter(function(bug){
+				var exsits = bug.exsits;
+				delete bug.exsits;
+				return exsits;
+			}).concat(newBugs);
+			// 自动显示第一个 bug
+			if(!$scope.hasOwnProperty("bugIndex") && $scope.bugs.length > 0) {
+				$scope.setBugIndex($scope.bugs[0].ID);
 			}
-			$scope.$digest();
+			$scope.$apply();
 		});
 	}
 	function getBugError(){
 		chrome.runtime.sendMessage({cmd: "get-bug-error"}, function(err){
 			$scope.bugError = err;
-			$scope.$digest();
+			$scope.$apply();
 		});
 	}
 }
 
-BugController.$inject = ["$scope", "$interval", "storage"];
+BugController.$inject = ["$scope", "$timeout", "storage"];
 
 function onModuleRun($rootScope, storage, isSetuped){
 	// 根据是否有存储的数据来判断显示哪个界面
