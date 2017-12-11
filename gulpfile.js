@@ -8,7 +8,7 @@ var gulp = require("gulp"),
 	fs = require("fs-extra"),
 	del = require("del");
 
-gulp.task("build-popup", function(){
+gulp.task("build-popup.html", function(){
 	gulp.src("src/popup.html").pipe(htmlmin({
 		removeComments: true,
 		removeCommentsFromCDATA: true,
@@ -21,20 +21,20 @@ gulp.task("build-popup", function(){
 	})).pipe(gulp.dest("dist"));
 });
 
-gulp.task("copy-static", ["build-popup"], function() {
+gulp.task("copy-static", function() {
 	gulp.src("src/img/*").pipe(gulp.dest("dist/img"));
 	gulp.src("src/css/*").pipe(gulp.dest("dist/css"));
 	gulp.src("src/js/angular.min.js").pipe(gulp.dest("dist/js"));
 });
 
-gulp.task("build-popup", function(){
+gulp.task("build-popup.js", function(){
 	gulp.src("src/js/popup.js")
 		.pipe(iife())
 		.pipe(minify())
 		.pipe(gulp.dest("dist/js"));
 });
 
-gulp.task("build", ["copy-static"], function(){
+gulp.task("build", ["copy-static", "build-popup.js", "build-popup.html"], function(){
 	var manifest = fs.readJsonSync("src/manifest.json");
 	// remove livereload.js
 	manifest.background.scripts.pop();
