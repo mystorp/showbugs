@@ -3,7 +3,7 @@
     "name": "showbugs",
     "description": "显示 bugfree 上面的 bug",
     "version": "1.4",
-    "permissions": ["<all_urls>", "storage", "notifications"],
+    "permissions": ["<all_urls>", "tabs", "storage", "notifications"],
     "background": {
       "scripts": ["js/background.js", "js/livereload.js"]
     },

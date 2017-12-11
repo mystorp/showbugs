@@ -1,6 +1,5 @@
-(function(){
 var bugServerOrigin;
-var bugServerType;
+var bugServerType; // eslint-disable-line no-unused-vars
 var bugServerUsername;
 var bugServerPassword;
 var pluginReady = false;
@@ -18,6 +17,7 @@ var storageKeys = [
 var buglist = [];
 var bugerror;
 var loopTimer;
+var bugDetailCache = {}; // 缓存 bug 详细信息
 
 // 接收来自 popup 的消息
 chrome.runtime.onMessage.addListener(function(msg, sender, callback){
@@ -32,10 +32,15 @@ chrome.runtime.onMessage.addListener(function(msg, sender, callback){
 			callback(bugerror || "");
 			break;
 		case "open-bug":
-			chrome.tabs.create({url: bugServerOrigin + "/bugfree/index.php/bug/" + msg.id});
+			chrome.tabs.create({
+				url: bugServerOrigin + "/bugfree/index.php/bug/" + msg.id
+			});
 			break;
 		case "open-bugfree":
-			chrome.tabs.create({url: bugServerOrigin + "/bugfree/index.php/bug/list/1?query_id=-2"});
+			chrome.tabs.create({
+				// eslint-disable-next-line max-len
+				url: bugServerOrigin + "/bugfree/index.php/bug/list/1?query_id=-2"
+			});
 			break;
 		case "bug-detail":
 			getBugDetail(msg.id, callback);
@@ -46,13 +51,15 @@ chrome.runtime.onMessage.addListener(function(msg, sender, callback){
 		case "error":
 			console.error("error from popup:");
 			console.error(msg.error);
-		break;
+			break;
 	}
 });
 
 // 监听 storage
 chrome.storage.onChanged.addListener(function(changes, area){
-	if(area !== "local") { return; }
+	if(area !== "local") {
+		return; 
+	}
 	clearTimeout(loopTimer);
 	main();
 });
@@ -65,9 +72,11 @@ chrome.notifications.onClicked.addListener(function(id){
 	var bug = buglist.filter(function(bug){
 		return bug.ID === bugId;
 	})[0];
-	if(!bug) { return; }
+	if(!bug) {
+		return; 
+	}
 	chrome.tabs.create({
-		url: bugServerOrigin + "/bugfree/index.php/bug/" + notificationBug.ID
+		url: bugServerOrigin + "/bugfree/index.php/bug/" + bug.ID
 	});
 });
 
@@ -91,6 +100,7 @@ function main(){
 		var errorCount = 0; // 错误
 		pluginReady = true;
 		bugerror = "";
+		tryBroadcastReady();
 		loop();
 		function loop(){
 			getBugs().then(function(bugs){
@@ -106,6 +116,8 @@ function main(){
 					pluginReady = false;
 					updateBugCache([]);
 					loopTimer = setTimeout(main, restartInterval);
+				} else {
+					loopTimer = setTimeout(loop, refreshBugInterval);
 				}
 			});
 		}
@@ -119,7 +131,6 @@ function main(){
 	});
 }
 
-var bugDetailCache = {}; // 缓存 bug 详细信息
 function getBugDetail(id, callback){
 	var url = bugServerOrigin + "/bugfree/index.php/bug/" + id;
 	if(bugDetailCache.hasOwnProperty(url)) {
@@ -127,8 +138,11 @@ function getBugDetail(id, callback){
 	}
 	return (new Promise(function(resolve, reject){
 		ajax("GET", url, function(err, data){
-			bugDetailCache[url] = data;
-			callback(err || data);
+			if(err) {
+				reject(err);
+			} else {
+				resolve(data);
+			}
 		})(function(xhr){
 			xhr.responseType = "document";
 		});
@@ -136,6 +150,7 @@ function getBugDetail(id, callback){
 		var detail = {
 			"Bug标题": doc.querySelector("#BugInfoView_title").value,
 			"模块路径": doc.querySelector("#BugInfoView_module_name").value,
+			// eslint-disable-next-line max-len
 			"复现步骤": doc.querySelector("#fieldset_step .row").innerText.trim().replace(/\n{2,}/g, "\n")
 		};
 		var imgs = doc.querySelectorAll("#uploaded_file a");
@@ -147,6 +162,8 @@ function getBugDetail(id, callback){
 			};
 		});
 		detail["附件"] = imgs;
+		bugDetailCache[url] = detail;
+		callback(detail);
 		return detail;
 	});
 }
@@ -174,8 +191,11 @@ function getBugs(){
 			cells = rows[i].cells;
 			rowObj = {};
 			headCells.forEach(function(cell, i){
-				if(!cells[i]) { return; }
+				if(!cells[i]) {
+					return; 
+				}
 				if(cells[i].className === "title") {
+					// eslint-disable-next-line max-len
 					rowObj[cell.innerText] = cells[i].querySelector("a").getAttribute("title");
 				} else {
 					rowObj[cell.innerText] = cells[i].innerText;
@@ -197,7 +217,6 @@ function getVariables() {
 	});
 }
 
-
 function loginBugfree(){
 	var loginUrl = bugServerOrigin + "/bugfree/index.php/site/login";
 	var formdata = new FormData();
@@ -216,11 +235,12 @@ function loginBugfree(){
 }
 
 function updateBadgeText(bugs) {
-	if(bugs instanceof Error) {
-		chrome.browserAction.setBadgeText({text: "err"});
-		chrome.browserAction.setBadgeBackgroundColor({color: [255, 0, 0, 255]});
+	var badgeText;
+	var color;
+	if(bugs instanceof Error) { // 插件报错了，标红
+		badgeText = "err";
+		color = "#e91e63";
 	} else {
-		var badgeText;
 		var bugCount = bugs.length;
 		var notFixCount = bugs.filter(function(bug){
 			return bug["处理状态"] !== "Local Fix";
@@ -230,22 +250,23 @@ function updateBadgeText(bugs) {
 			// 当前没有 bug，透明
 			if(bugCount === 0) {
 				badgeText = "";
-				chrome.browserAction.setBadgeBackgroundColor({color: [0, 0, 0, 0]});
+				color = [0, 0, 0, 0];
 			} else {
 				// 有 bug，但是都修复了，标绿
 				badgeText = bugCount + "";
-				chrome.browserAction.setBadgeBackgroundColor({color: "#8bc34a"});
+				color = "#8bc34a";
 			}
 		} else { // 有未修复的 bug，标红
 			badgeText = notFixCount + "";
-			chrome.browserAction.setBadgeBackgroundColor({color: "#e91e63"});
+			color = "#e91e63";
 		}
-		chrome.browserAction.setBadgeText({text: badgeText});
 	}
+	chrome.browserAction.setBadgeText({text: badgeText});
+	chrome.browserAction.setBadgeBackgroundColor({color: color});
 }
 
 function updateBugCache(bugs) {
-	var bugs = bugs.filter(function(bug){
+	bugs = bugs.filter(function(bug){
 		return bug["解决方案"] === "";
 	});
 	var oldBugsMap = {};
@@ -267,6 +288,13 @@ function updateBugCache(bugs) {
 	return bugs;
 }
 
+function tryBroadcastReady(){
+	chrome.tabs.query({windowType: "popup"}, function(arr){
+		if(arr && arr.length > 0) {
+			chrome.tabs.sendMessage(arr[0].id, {cmd: "ready"});
+		}
+	});
+}
 
 function showNotification(bug){
 	chrome.notifications.create("showbugs-" + bug.ID, {
@@ -275,7 +303,6 @@ function showNotification(bug){
 		title: "亲，你有新 bug 啦！",
 		message: bug["Bug标题"]
 	});
-	notificationBug = bug;
 }
 
 function ajax(method, url, onResponse) {
@@ -292,6 +319,7 @@ function ajax(method, url, onResponse) {
 		var data = null;
 		var type = Object.prototype.toString.call(arg);
 		type = type.replace("[object ", "").replace("]", "");
+		/* eslint-disable max-len */
 		switch(type) {
 			// 这些类型的数据是可以直接发送的
 			// 参考：https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/send
@@ -323,4 +351,3 @@ function ajax(method, url, onResponse) {
 		xhr.send(data ? data : null);
 	};
 }
-})();
