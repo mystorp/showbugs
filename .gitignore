@@ -33,3 +33,4 @@ node_modules
 *.sublime-workspace
 dist.crx
 dist.pem
+dist
