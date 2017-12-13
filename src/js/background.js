@@ -20,6 +20,7 @@ var buglist = [];
 var bugerror;
 var loopTimer;
 var bugDetailCache = {}; // 缓存 bug 详细信息
+var notifiedBugs = {};   // 已经通知过的 bug 
 
 // 接收来自 popup 的消息
 chrome.runtime.onMessage.addListener(function(msg, sender, callback){
@@ -289,17 +290,19 @@ function updateBugCache(bugs) {
 			newBugs.push(bug);
 		}
 	});
-	var fieldMissing = false;
-	newBugs.forEach(function(bug){
-		if(bug["处理状态"]) {
-			if(bug["处理状态"] !== "Local Fix") {
-				showBugNotification(bug);
-			}
-		} else {
-			fieldMissing = true;
-		}
+	var hasStatusField = newBugs.some(function(bug){
+		return bug.hasOwnProperty("处理状态");
 	});
-	if(fieldMissing) {
+	if(hasStatusField) {
+		newBugs.forEach(function(bug){
+			// `处理状态`为空时表示还没有处理过此 bug，其它状态忽略
+			// 已经通知过的 bug 不再重复提示
+			if(!bug["处理状态"] && !notifiedBugs.hasOwnProperty(bug.ID)) {
+				showBugNotification(bug);
+				notifiedBugs[bug.ID] = true;
+			}
+		});
+	} else {
 		showNotification(
 			"showbugs-ignore",
 			"无法获取 bug 的\"处理状态\"列信息",
