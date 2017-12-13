@@ -290,9 +290,9 @@ function updateBugCache(bugs) {
 			newBugs.push(bug);
 		}
 	});
-	var hasStatusField = newBugs.some(function(bug){
+	var hasStatusField = newBugs.length > 0 ? newBugs.some(function(bug){
 		return bug.hasOwnProperty("处理状态");
-	});
+	}) : true;
 	if(hasStatusField) {
 		newBugs.forEach(function(bug){
 			// `处理状态`为空时表示还没有处理过此 bug，其它状态忽略
