@@ -346,8 +346,12 @@ function ajax(method, url, onResponse) {
 		xhr.addEventListener("load", function(e){
 			onResponse(null, e.target.response);
 		});
-		xhr.addEventListener("error", onResponse);
-		xhr.addEventListener("timeout", onResponse);
+		xhr.addEventListener("error", function(){
+			onResponse(new Error("network error"));
+		});
+		xhr.addEventListener("timeout", function(){
+			onResponse(new Error("timeout"));
+		});
 	}
 	return function(arg){
 		var data = null;
